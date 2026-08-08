@@ -1,0 +1,106 @@
+openapi: 3.0.0
+info:
+  title: Resilient User Profile API
+  version: 1.0.0
+  description: A robust API for managing user profiles with resilience patterns.
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+paths:
+  /api/users:
+    post:
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+      responses:
+        '201':
+          description: User created
+        '400':
+          description: Validation error
+        '409':
+          description: Email already exists
+    get:
+      summary: Get all users
+      responses:
+        '200':
+          description: A list of users
+  /api/users/{id}:
+    get:
+      summary: Get a user by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User object
+        '404':
+          description: User not found
+    put:
+      summary: Update a user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Updated user object
+        '400':
+          description: Validation error
+        '404':
+          description: User not found
+    delete:
+      summary: Delete a user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No content
+        '404':
+          description: User not found
+  /api/users/{id}/enriched:
+    get:
+      summary: Get user with enriched data
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Enriched user object (with fallback)
+        '404':
+          description: User not found

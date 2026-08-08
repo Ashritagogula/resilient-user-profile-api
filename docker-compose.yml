@@ -1,0 +1,47 @@
+version: "3.8"
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MONGO_URI=mongodb://database:27017/user_management?replicaSet=rs0
+      - ENRICHMENT_SERVICE_URL=http://enrichment-service:8081/enrich
+      - ENRICHMENT_TIMEOUT_MS=2000
+      - CB_FAILURE_THRESHOLD=5
+      - CB_RESET_TIMEOUT_MS=30000
+      - CB_HALF_OPEN_SUCCESS_THRESHOLD=3
+      - RETRY_MAX_ATTEMPTS=3
+      - RETRY_BASE_DELAY_MS=200
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+
+  enrichment-service:
+    build: ./mock-service
+
+    environment:
+      - PORT=8081
+      - MOCK_FAILURE_RATE=0.2
+      - MOCK_LATENCY_MS=50
+
+  database:
+    image: mongo:6
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "try { rs.status().ok } catch(e) { rs.initiate().ok }", "--quiet"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
